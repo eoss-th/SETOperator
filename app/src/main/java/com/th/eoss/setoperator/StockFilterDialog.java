@@ -1,4 +1,4 @@
-package com.eoss.th.set.operator;
+package com.th.eoss.setoperator;
 
 import android.app.Dialog;
 import android.content.Context;

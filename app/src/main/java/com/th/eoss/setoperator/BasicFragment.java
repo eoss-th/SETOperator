@@ -1,29 +1,16 @@
-package com.eoss.th.set.operator;
+package com.th.eoss.setoperator;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import bean.Member;
+import com.th.eoss.util.SET;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,52 +29,25 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 	ListView stockListView;
 
-	List<Map<String, String>> stockList, resultList;
-
 	SimpleAdapter adapter;
-	
-	Map<String, Calendar> xdMap = new HashMap<String, Calendar>();
 
 	Handler handler = new Handler();
 
 	NumberFormat decimalFormat = new DecimalFormat("0.00");
 
-	Map<String, Filter> filterList = new HashMap<String, Filter>();
+	Map<String, SET.Filter> filterList = new HashMap<>();
 
 	TextView  dateText;
 
 	TextView typeText;	
 
-	DateFormat xdDateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.US);
-
-	List<ToggleButton> buttons = new ArrayList<ToggleButton>();
-
-	class Filter {
-
-		String opt;
-
-		String value;
-
-		Filter (String opt, String value) {
-			this.opt = opt;
-			this.value = value;
-		}
-	}
-
-	@Override
-	public void onAttach(Activity activity) {
-
-		super.onAttach(activity);
-
-		stockList = new ArrayList<Map<String, String>>();
-		
-		resultList = new ArrayList<Map<String, String>>();
-
-	}
+	List<ToggleButton> buttons = new ArrayList<>();
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+
+		SET.instance().init();
 
 		View	rootView = inflater.inflate(R.layout.basic_main, container, false);
 
@@ -128,7 +88,7 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
-		adapter = new StockAdapter(getActivity(), resultList,
+		adapter = new StockAdapter(getActivity(), SET.instance().resultList(),
 					R.layout.basic_row, new String[] { "symbol", "ROA", "ROE",
 					"P/E", "P/BV", "DVD", "Price" }, new int[] { R.id.name,
 					R.id.roa, R.id.roe, R.id.pe, R.id.pbv, R.id.dvd,
@@ -140,47 +100,22 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 	}
 
 	@Override
+	public void onAttach(Context context) {
+		super.onAttach(context);
+		SET.instance().init();
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		
-		if (resultList.isEmpty()) {
+		if (SET.instance().resultList().isEmpty()) {
 			
 			load();
 			
 		}
 		
 	}
-
-	private String loadFake()  throws Exception {
-
-		Scanner sc = new Scanner(getActivity().getResources().openRawResource(R.raw.m));
-
-		StringBuilder buffer = new StringBuilder();
-
-		while (sc.hasNextLine()) {
-			buffer.append(sc.nextLine());
-		}
-
-		return buffer.toString();
-	}
-
-	private String loadURL(String location) throws Exception {
-		URL url = new URL(location);
-		BufferedReader br = new BufferedReader(
-				new InputStreamReader(url.openStream()));
-
-		StringBuilder buffer = new StringBuilder();
-
-		String line;
-		while (true) {
-			line = br.readLine();
-			if (line==null) break;
-			buffer.append(line);
-		}
-		return buffer.toString();
-	}
-
-
 
 	@Override
 	public void onPause() {
@@ -190,7 +125,7 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 			tb.setChecked(false);
 		}
 		filterList.clear();
-		resultList.clear();
+		SET.instance().clearResult();
 		adapter.notifyDataSetChanged();
 		
 	}
@@ -203,101 +138,14 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 				try {
 
-					String buffer = loadURL("http://setoperator.appspot.com/snapshot?email=" + Member.instance().getEmail());
-
-					if (buffer.equals("expired") || buffer.equals("invalid")) {
-
-						handler.post(new Runnable() {
-
-							@Override
-							public void run() {
-								onExpired();
-							}
-
-						});
-						return;
-					}
-					//String buffer = loadFake();
-
-					JSONObject obj = new JSONObject(buffer);
-
-					String date = obj.getString("date");
-					final String dateString = "As Of " + date;
-
-
-					JSONArray data = obj.getJSONArray("data");
-
-					int len = data.length();
-
-					JSONArray row;
-					Map<String, String> map;
-					String tmp;
-
-					stockList.clear();
-					xdMap.clear();
-
-					for (int i = 0; i < len; i++) {
-
-						row = data.getJSONArray(i);
-
-						map = new HashMap<String, String>();
-						map.put("symbol", row.getString(0));
-						map.put("Type", row.getString(1));
-
-						tmp = row.getString(2);
-						if (tmp.equals("NaN"))
-							map.put("ROA", "-");
-						else
-							map.put("ROA", tmp);
-
-						tmp = row.getString(3);
-						if (tmp.equals("NaN"))
-							map.put("ROE", "-");
-						else
-							map.put("ROE", tmp);
-
-						tmp = row.getString(4);
-						if (tmp.equals("NaN"))
-							map.put("P/E", "-");
-						else
-							map.put("P/E", tmp);
-
-						tmp = row.getString(5);
-						if (tmp.equals("NaN"))
-							map.put("P/BV", "-");
-						else
-							map.put("P/BV", tmp);
-
-						tmp = row.getString(6);
-						if (tmp.equals("NaN"))
-							map.put("DVD", "-");
-						else
-							map.put("DVD", tmp);
-
-						tmp = row.getString(7);
-						if (tmp.equals("NaN"))
-							map.put("Price", "-");
-						else
-							map.put("Price", tmp);
-
-						tmp = row.getString(8);
-
-						if (tmp!=null && tmp.equals("null") == false) {
-
-							Calendar xdate = Calendar.getInstance(Locale.US);
-							xdate.setTime(xdDateFormat.parse(tmp));							
-							xdMap.put(map.get("symbol"), xdate);
-						}
-
-						stockList.add(map);
-					}
+					final String asOfDate = SET.instance().load();
 
 					handler.post(new Runnable() {
 
 						@Override
 						public void run() {
 
-							dateText.setText(dateString);							
+							dateText.setText(asOfDate);
 							applyFilter();
 								
 						}
@@ -335,9 +183,7 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 			TextView dvd = (TextView) v.findViewById(R.id.dvd);
 
-			Calendar xd = xdMap.get(symbol);
-
-			if (xd!=null && xd.after(Calendar.getInstance(Locale.US))) {
+			if (SET.instance().isXDAfterNow(symbol)) {
 
 				dvd.setTextColor(green);
 
@@ -371,7 +217,7 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 		String name = tb.getTextOff().toString();
 
-		Filter filter = filterList.get(name);
+		SET.Filter filter = filterList.get(name);
 
 		if (filter!=null) {
 
@@ -389,46 +235,9 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 
 	void applyFilter() {
 
-		boolean match;
+		SET.instance().clearResult();
 
-		Set<String> filterSet = filterList.keySet();
-		Filter filter;
-		
-		resultList.clear();
-
-		for (Map<String, String> map: stockList) {
-
-			match = true;
-
-			for (String name: filterSet) {
-
-				filter = filterList.get(name);
-				try {
-
-					if (filter.opt.equals("=")) {
-
-						match &= map.get(name).equals(filter.value);
-
-					} if (filter.opt.equals("<")) {
-
-						match &= Double.parseDouble(map.get(name)) <= Double.parseDouble(filter.value);
-
-					} else if (filter.opt.equals(">")) {
-
-						match &= Double.parseDouble(map.get(name)) >= Double.parseDouble(filter.value);
-					} 
-
-				} catch (Exception e) {
-					match &= false;
-				}
-
-			}
-
-			if (match) {
-				resultList.add(map);					
-			}
-
-		}
+		SET.instance().applyFilter(filterList);
 
 		adapter.notifyDataSetChanged();
 	}
@@ -436,7 +245,7 @@ public class BasicFragment extends Fragment implements OnClickListener, FilterLi
 	@Override
 	public void onValue(String filterName, String opt, String value) {
 
-		filterList.put(filterName, new Filter(opt, value));
+		filterList.put(filterName, new SET.Filter(opt, value));
 
 		applyFilter();
 

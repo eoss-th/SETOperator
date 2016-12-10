@@ -1,4 +1,4 @@
-package com.eoss.th.set.operator;
+package com.th.eoss.setoperator;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -24,9 +24,6 @@ import java.util.TimerTask;
 
 import org.json.JSONObject;
 
-import bean.Member;
-import bean.StockQuote;
-
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,6 +46,9 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import com.th.eoss.util.SETDividend;
+import com.th.eoss.util.SETQuote;
 
 public class RealtimeFragment extends Fragment implements
 TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
@@ -183,20 +183,9 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 						}
 						
 					}
-					
-					URL url = new URL("http://setoperator.appspot.com/member?email=" + Member.instance().getEmail() + sb.toString());
-					BufferedReader br = new BufferedReader(
-							new InputStreamReader(url.openStream()));
 
-					StringBuilder buffer = new StringBuilder();
+					//TODO: Update Statistics
 
-					String line;
-					while (true) {
-						line = br.readLine();
-						if (line==null) break;
-						buffer.append(line);
-					}
-					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -266,16 +255,12 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 	}
 
-	private JSONObject _load(String symbol) throws Exception {
-		URL url = new URL("http://eoss-operator.appspot.com/quote?s=" + URLEncoder.encode(symbol, "UTF-8"));
-		BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
-
-		JSONObject obj = new JSONObject(br.readLine());
-		return obj;
+	private SETQuote load(String symbol) throws Exception {
+		return new SETQuote(symbol);
 	}
 
-	private StockQuote load(String symbol) throws Exception {
-		return StockQuote.create(symbol);
+	private SETDividend loadXD(String symbol) throws Exception {
+		return new SETDividend(symbol);
 	}
 
 	public void startTimer() {
@@ -302,20 +287,20 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 					try {
 
-						StockQuote q = load(s.get("symbol"));
+						SETQuote q = load(s.get("symbol"));
 
-						if (q.getLast()==0.0) continue; //Connection Error, Skip
+						if (q.last==0.0) continue; //Connection Error, Skip
 						
 						double last, change; 
 						try {
 							last = Double.parseDouble(s.get("price"));//Last Price
 							
-							change = q.getLast() - last;//Current - Previous
+							change = q.last - last;//Current - Previous
 						} catch (Exception e) {
-							change = q.getChangedValue();
+							change = q.chg;
 						}
 						
-						s.put("price", "" + q.getLast());
+						s.put("price", "" + q.last);
 						s.put("change", decimalFormat.format(change));
 
 						if (change != 0) {
@@ -380,7 +365,7 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 	}
 
-	private void update(final String symbol, final StockQuote q, final StockQuote.XD xd) {
+	private void update(final String symbol, final SETQuote q, final SETDividend xd) {
 
 		handler.post(new Runnable() {
 
@@ -391,12 +376,12 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 					try {
 						Map<String, String> map = new HashMap<String, String>();
 						map.put("symbol", "" + symbol);
-						map.put("price", "" + q.getLast());
-						map.put("change", "" + q.getChangedValue());
+						map.put("price", "" + q.last);
+						map.put("change", "" + q.chg);
 
 						if (xd!=null) {
-							map.put("xd", xd.dateString);
-							map.put("dvd", xd.dvd);										
+							map.put("xd", xd.xd);
+							map.put("dvd", xd.value);
 						}
 
 						stockList.add(map);
@@ -427,9 +412,9 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 						}
 					}
 
-					final StockQuote q = load(symbol);
+					final SETQuote q = load(symbol);
 
-					final StockQuote.XD xd = StockQuote.loadXD(symbol);
+					final SETDividend xd = loadXD(symbol);
 
 					update(symbol, q, xd);
 

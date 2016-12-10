@@ -1,8 +1,6 @@
-package com.eoss.th.set.operator;
+package com.th.eoss.setoperator;
 
 import java.util.regex.Pattern;
-
-import bean.Member;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -31,25 +29,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	
 	static ActionBar actionBar;
 	
-	static MemberFragment memberFragment;
-
-	ViewPager mViewPager;	
+	ViewPager mViewPager;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 				
-		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-		Account[] accounts = AccountManager.get(this).getAccounts();
-		for (Account account : accounts) {
-		    if (emailPattern.matcher(account.name).matches()) {
-		        Member.instance().setEmail(account.name);
-		        break;
-		    }
-		}
-		
-		TelephonyManager tMgr =(TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-		Member.instance().setTel(tMgr.getLine1Number());
-		
 		if (realtimeFragment==null) {
 			realtimeFragment = new RealtimeFragment();
 		}
@@ -62,10 +46,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			xdFragment  = new XDFragment();
 		}
 
-        if (memberFragment==null) {
-            memberFragment = new MemberFragment();
-        }
-		
 		//TODO Remove this code on production!
 		
 		setContentView(R.layout.activity_main);
@@ -145,14 +125,13 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			case 0: return realtimeFragment;
 			case 1: return basicFragment; 
 			case 2: return xdFragment;				
-			case 3: return memberFragment;				
 			}
 			return null;
 		}
 
 		@Override
 		public int getCount() {
-			return 4;
+			return 3;
 		}
 
 		@Override
@@ -162,7 +141,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			case 0: return "Watch";
 			case 1: return "Values";
 			case 2: return "XD";
-			case 3: return "Member";
 			}
 			return "";
 		}

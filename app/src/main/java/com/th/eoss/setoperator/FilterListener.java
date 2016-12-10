@@ -1,4 +1,4 @@
-package com.eoss.th.set.operator;
+package com.th.eoss.setoperator;
 
 public interface FilterListener {
 
