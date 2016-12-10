@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:background="@android:color/holo_orange_dark"
+ 	    android:padding="5dp"
+         >
+
+        <TextView
+            android:id="@+id/typeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="All"
+            android:textColor="@android:color/white" />
+
+        <TextView
+            android:id="@+id/dateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+		    android:textColor="@android:color/white"             
+            />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#000000" >
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="Type"
+                android:textOff="Type"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/roa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="ROA"
+                android:textOff="ROA"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/roe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="ROE"
+                android:textOff="ROE"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/pe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="P/E"
+                android:textOff="P/E"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/pbv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="P/BV"
+                android:textOff="P/BV"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/dvd"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="DVD"
+                android:textOff="DVD"
+                android:textColor="#ffffff"
+                />
+        </RelativeLayout>
+        
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+
+            <ToggleButton
+                android:id="@+id/price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOn="Price"
+                android:textOff="Price"
+                android:textColor="#ffffff"
+                />
+
+        </RelativeLayout>
+        
+            <Space
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                />
+                
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/listView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#000000" >
+
+    </ListView>
+
+</LinearLayout>
