@@ -1,12 +1,9 @@
 package com.th.eoss.setoperator;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -22,8 +19,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.JSONObject;
-
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,7 +26,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -51,7 +46,7 @@ import com.th.eoss.util.SETDividend;
 import com.th.eoss.util.SETQuote;
 
 public class RealtimeFragment extends Fragment implements
-TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
+TextToSpeech.OnInitListener {
 
 	static TextToSpeech tts;
 
@@ -72,15 +67,40 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 	EditText editSymbolText;
 
 	@Override
-	public void onAttach(Activity activity) {
+	public void onAttach(Context context) {
 		// TODO Auto-generated method stub
-		super.onAttach(activity);		
+		super.onAttach(context);
 
 		if (tts==null) {
 
-			tts = new TextToSpeech(this.getActivity(), this);
+			//tts = new TextToSpeech(this.getActivity(), this);
+			tts = new TextToSpeech(context, this, "com.google.android.tts");
 
-			tts.setOnUtteranceCompletedListener(this);
+			tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+
+				@Override
+				public void onStart(String s) {
+
+				}
+
+				@Override
+				public void onDone(String s) {
+					handler.post(new Runnable() {
+
+						@Override
+						public void run() {
+							toggleSpeakButton.setBackgroundResource(R.drawable.bot);
+							toggleSpeakButton.setEnabled(true);
+						}
+
+					});
+				}
+
+				@Override
+				public void onError(String s) {
+
+				}
+			});
 
 		}
 
@@ -319,9 +339,11 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 							}
 
 							if (change > 0)
-								sb.append(t + ", Up, " + s.get("price"));
+//								sb.append(t + ", Up, " + s.get("price"));
+							sb.append(t + " ขึ้น " + s.get("price") + " บาท");
 							else
-								sb.append(t + ", Down, " + s.get("price"));
+//								sb.append(t + ", Down, " + s.get("price"));
+							sb.append(t + " ลง " + s.get("price") + " บาท");
 
 							sb.append(", ");
 
@@ -351,7 +373,7 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 							myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_NOTIFICATION));
 							myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "" + System.currentTimeMillis());
-							tts.speak(sb.toString(), TextToSpeech.QUEUE_FLUSH, myHashAlarm);
+							tts.speak(sb.toString(), TextToSpeech.QUEUE_ADD, myHashAlarm);
 
 						}
 					}
@@ -543,7 +565,12 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 		myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_NOTIFICATION));
 		myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "" + System.currentTimeMillis());
-		tts.speak("Hello, Welcome to Set Operator", TextToSpeech.QUEUE_FLUSH, myHashAlarm);
+//		tts.speak("สวัสดีค่ะ ยินดีต้อนรับเข้าสู่ SET Operator ค่ะ", TextToSpeech.QUEUE_ADD, myHashAlarm);
+		tts.speak("สักวาลมหนาวเริ่มมาแล้ว", TextToSpeech.QUEUE_ADD, myHashAlarm);
+		tts.speak("คงไม่แคล้วจิบเบียร์ที่แสนหวาน", TextToSpeech.QUEUE_ADD, myHashAlarm);
+		tts.speak("อยู่กับพี่ทำน้องเคลิ้มทุกวันวาน", TextToSpeech.QUEUE_ADD, myHashAlarm);
+		tts.speak("จะทำงานรับใช้พี่ทุกเช้าเย็น", TextToSpeech.QUEUE_ADD, myHashAlarm);
+		tts.speak("ยินดีต้อนรับเข้าสู่ SET Operator ค่า", TextToSpeech.QUEUE_ADD, myHashAlarm);
 	}
 
 	@Override
@@ -551,32 +578,21 @@ TextToSpeech.OnInitListener, OnUtteranceCompletedListener {
 
 		if (status == TextToSpeech.SUCCESS) {
 
-			int result = tts.setLanguage(Locale.US);
+			int result = tts.setLanguage(new Locale("th"));
 
 			if (result == TextToSpeech.LANG_MISSING_DATA
 					|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 
 				Log.e("TTS", "This Language is not supported");
-			} 
+
+				tts.setLanguage(Locale.US);
+			} else {
+				speakOut();
+			}
 
 		} else {
 			Log.e("TTS", "Initilization Failed!");
 		}
-
-	}
-
-	@Override
-	public void onUtteranceCompleted(String arg0) {
-
-		handler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				toggleSpeakButton.setBackgroundResource(R.drawable.bot);
-				toggleSpeakButton.setEnabled(true);
-			}
-
-		});
 
 	}
 

@@ -1,21 +1,13 @@
 package com.th.eoss.setoperator;
 
-import java.util.regex.Pattern;
-
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.telephony.TelephonyManager;
-import android.util.Patterns;
 
 public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
 
