@@ -6,8 +6,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URLEncoder;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,71 +19,70 @@ import java.util.TimerTask;
 
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.th.eoss.util.Formatter;
 import com.th.eoss.util.SETDividend;
 import com.th.eoss.util.SETQuote;
+import com.th.eoss.util.SpeechBundle;
 
-public class RealtimeFragment extends Fragment implements
-TextToSpeech.OnInitListener {
+public class WatchFragment extends Fragment implements TextToSpeech.OnInitListener {
 
-	static TextToSpeech tts;
+    static Timer timer;
 
-	ListView stockListView;
+	static TextToSpeech textToSpeech;
 
 	static List<Map<String, String>> stockList;
 
 	static SimpleAdapter adapter;
 
-	Timer timer;
+    SpeechBundle speechBundle;
 
-	Handler handler = new Handler();
-
-	NumberFormat decimalFormat = new DecimalFormat("0.00");
+	ListView stockListView;
 
 	ToggleButton toggleSpeakButton;
 
-	EditText editSymbolText;
-
 	@Override
 	public void onAttach(Context context) {
-		// TODO Auto-generated method stub
 		super.onAttach(context);
 
-		if (tts==null) {
+		if (textToSpeech ==null) {
 
-			//tts = new TextToSpeech(this.getActivity(), this);
-			tts = new TextToSpeech(context, this, "com.google.android.tts");
+			textToSpeech = new TextToSpeech(context, this, "com.google.android.textToSpeech");
 
-			tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+			textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
 
 				@Override
 				public void onStart(String s) {
+                    SingleHandler.handler.post(new Runnable() {
 
+						@Override
+						public void run() {
+							toggleSpeakButton.setEnabled(false);
+							toggleSpeakButton.setBackgroundResource(R.drawable.bot_speaking);
+						}
+
+					});
 				}
 
 				@Override
 				public void onDone(String s) {
-					handler.post(new Runnable() {
+                    SingleHandler.handler.post(new Runnable() {
 
 						@Override
 						public void run() {
@@ -105,60 +102,40 @@ TextToSpeech.OnInitListener {
 		}
 
 		load();
-
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-		View rootView = inflater.inflate(R.layout.operation_main, container, false);
+		View rootView = inflater.inflate(R.layout.watch_main, container, false);
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
 		toggleSpeakButton = (ToggleButton) rootView.findViewById(R.id.toggleButton1);
 
-		editSymbolText = (EditText) rootView.findViewById(R.id.symbol);	
-
-		editSymbolText.setImeOptions(EditorInfo.IME_ACTION_DONE);		
-
-		editSymbolText.setOnEditorActionListener(new TextView.OnEditorActionListener() { 
-			@Override 
-			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) { 
-				if (actionId == EditorInfo.IME_ACTION_DONE) { 
-
-					addSymbol(v);
-
-				} 
-				return false; 
-			}
-
-		}); 		
-
-		Button addSymbolButton = (Button) rootView.findViewById(R.id.addSymbolButton);
-
-		addSymbolButton.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-
-				addSymbol(v);
-
-			}
-
-		});
-
 		if (adapter==null) {
-			adapter = new StockAdapter(getActivity(), stockList, R.layout.stock_row, new String[]{"symbol", "price", "change", "xd"}, new int[]{R.id.name, R.id.last, R.id.change, R.id.xdDate});			
+			adapter = new StockAdapter(getActivity(), stockList, R.layout.watch_row, new String[]{"symbol", "price", "change", "dvd", "xd"}, new int[]{R.id.name, R.id.last, R.id.change, R.id.dvd, R.id.xdDate});
 		}
 
 		stockListView.setAdapter(adapter);
+
+		stockListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+				Map<String, String> set = stockList.get(i);
+				MainActivity.viewPager.setCurrentItem(3);
+				MainActivity.historicalFragment.load(set);
+
+			}
+		});
 
 		stockListView.setKeepScreenOn(true);
 
 		return rootView;
 	}
 
-	@Override
+    @Override
 	public void onPause() {
 		super.onPause();
 		stopTimer();		
@@ -167,18 +144,14 @@ TextToSpeech.OnInitListener {
 	@Override
 	public void onResume() {
 		super.onResume();
-
 		startTimer();
-
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		// Don't forget to shutdown tts!
+		// Don't forget to shutdown textToSpeech!
 		stopTTS();
-		
-		serverUpdateSymbolList();		
 	}
 	
 	private void serverUpdateSymbolList() {
@@ -225,6 +198,7 @@ TextToSpeech.OnInitListener {
 	private void load() {
 
 		if (stockList==null) {
+
 			try {
 
 				FileInputStream fi = this.getActivity().openFileInput("data.ser");
@@ -258,10 +232,10 @@ TextToSpeech.OnInitListener {
 
 	public void stopTTS() {
 
-		if (tts != null) {
-			tts.stop();
-			tts.shutdown();
-			tts = null;
+		if (textToSpeech != null) {
+			textToSpeech.stop();
+			textToSpeech.shutdown();
+			textToSpeech = null;
 		}
 
 	}
@@ -298,6 +272,7 @@ TextToSpeech.OnInitListener {
 
 					for (Map<String, String> s:stockList) {
 						resultList.add(s);
+                        Log.i("Symbol", s.get("symbol"));
 					}
 				}
 
@@ -311,19 +286,10 @@ TextToSpeech.OnInitListener {
 
 						if (q.last==0.0) continue; //Connection Error, Skip
 						
-						double last, change; 
-						try {
-							last = Double.parseDouble(s.get("price"));//Last Price
-							
-							change = q.last - last;//Current - Previous
-						} catch (Exception e) {
-							change = q.chg;
-						}
-						
 						s.put("price", "" + q.last);
-						s.put("change", decimalFormat.format(change));
+						s.put("change", Formatter.decimalFormat.format(q.chg));
 
-						if (change != 0) {
+						if (q.chg != 0) {
 
 							String symbol = s.get("symbol");
 
@@ -338,12 +304,10 @@ TextToSpeech.OnInitListener {
 								t = symbol;
 							}
 
-							if (change > 0)
-//								sb.append(t + ", Up, " + s.get("price"));
-							sb.append(t + " ขึ้น " + s.get("price") + " บาท");
-							else
-//								sb.append(t + ", Down, " + s.get("price"));
-							sb.append(t + " ลง " + s.get("price") + " บาท");
+							if (q.chg > 0)
+    							sb.append(t + " " + speechBundle.get("up") + " " + s.get("price") + " " + speechBundle.get("bath"));
+							else if (q.chg < 0)
+                                sb.append(t + " " + speechBundle.get("down") + " " + s.get("price") + " " + speechBundle.get("bath"));
 
 							sb.append(", ");
 
@@ -351,14 +315,14 @@ TextToSpeech.OnInitListener {
 
 					} catch (Exception e) {
 						e.printStackTrace();
+                        Log.e("Error", e.getMessage());
 						break;
 
 					}
 
 				}//End loop
 
-
-				handler.post(new Runnable() {
+				SingleHandler.handler.post(new Runnable() {
 
 					@Override
 					public void run() {
@@ -366,14 +330,15 @@ TextToSpeech.OnInitListener {
 						adapter.notifyDataSetChanged();
 
 						if ( toggleSpeakButton.isChecked() && sb.length()>0 ) {
-							toggleSpeakButton.setEnabled(false);
-							toggleSpeakButton.setBackgroundResource(R.drawable.bot_speaking);
 
+							/*
 							HashMap<String, String> myHashAlarm = new HashMap<String, String>();
-
 							myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_NOTIFICATION));
 							myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "" + System.currentTimeMillis());
-							tts.speak(sb.toString(), TextToSpeech.QUEUE_ADD, myHashAlarm);
+							textToSpeech.speak(sb.toString(), TextToSpeech.QUEUE_ADD, myHashAlarm);
+							*/
+
+							textToSpeech.speak(sb.toString(), TextToSpeech.QUEUE_ADD, null, "");
 
 						}
 					}
@@ -383,13 +348,13 @@ TextToSpeech.OnInitListener {
 			}
 
 
-		}, 0,  60 * 1000);	
+		}, 0,  60 * 1000 * 1);
 
 	}
 
 	private void update(final String symbol, final SETQuote q, final SETDividend xd) {
 
-		handler.post(new Runnable() {
+        SingleHandler.handler.post(new Runnable() {
 
 			@Override
 			public void run() {
@@ -402,8 +367,8 @@ TextToSpeech.OnInitListener {
 						map.put("change", "" + q.chg);
 
 						if (xd!=null) {
+                            map.put("dvd", xd.value);
 							map.put("xd", xd.xd);
-							map.put("dvd", xd.value);
 						}
 
 						stockList.add(map);
@@ -436,9 +401,9 @@ TextToSpeech.OnInitListener {
 
 					final SETQuote q = load(symbol);
 
-					final SETDividend xd = loadXD(symbol);
+					final SETDividend d = loadXD(symbol);
 
-					update(symbol, q, xd);
+					update(symbol, q, d);
 
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -450,20 +415,7 @@ TextToSpeech.OnInitListener {
 
 	}
 
-	public void addSymbol(View v) {
-
-		final String symbol = editSymbolText.getText().toString().toUpperCase();
-		editSymbolText.setText("");
-
-		addSymbol(symbol);
-	}
-
 	class StockAdapter extends SimpleAdapter {
-
-		int red = getResources().getColor(android.R.color.holo_red_light);
-		int green = getResources().getColor(android.R.color.holo_green_light);
-		int white = Color.parseColor("#FFFFFF");
-		int blue = getResources().getColor(android.R.color.holo_blue_light);
 
 		public StockAdapter(Context context,
 				List<? extends Map<String, ?>> data, int resource,
@@ -475,12 +427,13 @@ TextToSpeech.OnInitListener {
 		public View getView(final int position, View convertView, ViewGroup parent) {
 			View v = super.getView(position, convertView, parent);
 
-			Button remove = (Button) ((ViewGroup)v).findViewById(R.id.remove);
+			Button remove = (Button) v.findViewById(R.id.remove);
 
-			TextView change = (TextView) ((ViewGroup)v).findViewById(R.id.change);
-			TextView last = (TextView) ((ViewGroup)v).findViewById(R.id.last);
-			TextView xdDate = (TextView) ((ViewGroup)v).findViewById(R.id.xdDate);
-			TextView xdPercent = (TextView) ((ViewGroup)v).findViewById(R.id.xdPercent);
+			TextView change = (TextView) v.findViewById(R.id.change);
+			TextView last = (TextView) v.findViewById(R.id.last);
+			TextView xdDate = (TextView) v.findViewById(R.id.xdDate);
+			TextView dvd = (TextView) v.findViewById(R.id.dvd);
+			TextView dvdPercent = (TextView) v.findViewById(R.id.dvdPercent);
 
 			double val;
 			try {
@@ -491,40 +444,43 @@ TextToSpeech.OnInitListener {
 
 			if (val>0) {
 
-				change.setTextColor(green);
-				last.setTextColor(green);
+				change.setTextColor(Theme.green);
+				last.setTextColor(Theme.green);
 
-			} else if (val <0) {
+			} else if (val<0) {
 
-				change.setTextColor(red);
-				last.setTextColor(red);
+				change.setTextColor(Theme.red);
+				last.setTextColor(Theme.red);
 
 			} else {
 
-				change.setTextColor(white);
-				last.setTextColor(white);
+				change.setTextColor(Theme.white);
+				last.setTextColor(Theme.white);
 			}
 
 			if (isBeforeXD(xdDate.getText().toString())) {
 
-				xdDate.setTextColor(green);			
+				xdDate.setTextColor(Theme.green);
 
 			} else {
 
-				xdDate.setTextColor(red);			
+				xdDate.setTextColor(Theme.red);
 
 			}
+
+            dvd.setTextColor(Theme.white);
 
 			Map<String, String> map = stockList.get(position);
-			String dvd = map.get("dvd");
+			String dvdText = map.get("dvd");
+
 			try {
-				double percent = Double.parseDouble(dvd) / Double.parseDouble(last.getText().toString()) * 100;  
-				xdPercent.setText(decimalFormat.format(percent));
+				double percent = Double.parseDouble(dvdText) / Double.parseDouble(last.getText().toString()) * 100;
+				dvdPercent.setText(Formatter.decimalFormat.format(percent));
 			} catch (Exception e) {
-				xdPercent.setText(dvd);				
+				dvdPercent.setText("");
 			}
 
-			xdPercent.setTextColor(Color.parseColor("#FFFFFF"));			
+			dvdPercent.setTextColor(Theme.white);
 
 			remove.setOnClickListener(new OnClickListener() {
 
@@ -565,12 +521,8 @@ TextToSpeech.OnInitListener {
 
 		myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_NOTIFICATION));
 		myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "" + System.currentTimeMillis());
-//		tts.speak("สวัสดีค่ะ ยินดีต้อนรับเข้าสู่ SET Operator ค่ะ", TextToSpeech.QUEUE_ADD, myHashAlarm);
-		tts.speak("สักวาลมหนาวเริ่มมาแล้ว", TextToSpeech.QUEUE_ADD, myHashAlarm);
-		tts.speak("คงไม่แคล้วจิบเบียร์ที่แสนหวาน", TextToSpeech.QUEUE_ADD, myHashAlarm);
-		tts.speak("อยู่กับพี่ทำน้องเคลิ้มทุกวันวาน", TextToSpeech.QUEUE_ADD, myHashAlarm);
-		tts.speak("จะทำงานรับใช้พี่ทุกเช้าเย็น", TextToSpeech.QUEUE_ADD, myHashAlarm);
-		tts.speak("ยินดีต้อนรับเข้าสู่ SET Operator ค่า", TextToSpeech.QUEUE_ADD, myHashAlarm);
+
+		textToSpeech.speak(speechBundle.get("greeting"), TextToSpeech.QUEUE_ADD, null, "");
 	}
 
 	@Override
@@ -578,17 +530,21 @@ TextToSpeech.OnInitListener {
 
 		if (status == TextToSpeech.SUCCESS) {
 
-			int result = tts.setLanguage(new Locale("th"));
+			int result = textToSpeech.setLanguage(new Locale("th"));
 
 			if (result == TextToSpeech.LANG_MISSING_DATA
 					|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 
 				Log.e("TTS", "This Language is not supported");
 
-				tts.setLanguage(Locale.US);
+                textToSpeech.setLanguage(Locale.US);
+                speechBundle = SpeechBundle.create("en");
+
 			} else {
-				speakOut();
+                speechBundle = SpeechBundle.create("th");
 			}
+
+            speakOut();
 
 		} else {
 			Log.e("TTS", "Initilization Failed!");

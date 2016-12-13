@@ -1,21 +1,14 @@
 package com.th.eoss.util;
 
-import android.app.Activity;
-
-import com.th.eoss.setoperator.R;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 /**
@@ -24,7 +17,7 @@ import java.util.Set;
 
 public class SET {
 
-    private static final String CSV_URL = "http://eoss-setfin.appspot.com/csv";
+    private static final String CSV_URL = "http://eoss-setfin.appspot.com/csv?setOperator";
 
     private static SET set;
 
@@ -32,9 +25,13 @@ public class SET {
 
     private List<Map<String, String>> stockList, resultList;
 
-    private Map<String, Calendar> xdMap = new HashMap<String, Calendar>();
+    private Map<String, Calendar> xdMap;
 
-    private DateFormat xdDateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.US);
+    private Map<String, Filter> filterMap = new HashMap<>();
+
+    private SETHistorical selectedHistorical;
+
+    public String selectedName, selectedWebsite, selectedPolicy;
 
     public static SET instance () {
         if (set==null) {
@@ -43,22 +40,10 @@ public class SET {
         return set;
     }
 
-    private String loadFake(Activity activity)  throws Exception {
-
-        Scanner sc = new Scanner(activity.getResources().openRawResource(R.raw.m));
-
-        StringBuilder buffer = new StringBuilder();
-
-        while (sc.hasNextLine()) {
-            buffer.append(sc.nextLine());
-        }
-
-        return buffer.toString();
-    }
-
-    public void init() {
+    private SET() {
         stockList = new ArrayList<>();
         resultList = new ArrayList<>();
+        xdMap = new HashMap<>();
     }
 
     private void mapValue(Map<String, String> row, String name, String value) {
@@ -72,110 +57,119 @@ public class SET {
 
     public String load() throws Exception {
 
-        URL url = new URL(CSV_URL);
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(url.openStream()));
+        if (stockList.isEmpty()) {
+            URL url = new URL(CSV_URL);
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(url.openStream()));
 
-        if (br.readLine()!=null) {
+            if (br.readLine()!=null) {
 
-            stockList.clear();
-            xdMap.clear();
+                String line, xd;
+                String [] tokens;
+                Map<String, String> row;
+                while (true) {
 
-            String line, xd;
-            String [] tokens;
-            Map<String, String> row;
-            while (true) {
+                    line = br.readLine();
+                    if (line==null) break;
 
-                line = br.readLine();
-                if (line==null) break;
+                    tokens = line.split(",");
 
-                tokens = line.split(",");
+                    row = new HashMap<String, String>();
 
-                row = new HashMap<String, String>();
+                    row.put("Type", tokens[0]);
 
-                row.put("Type", tokens[0]);
+                    row.put("symbol", tokens[2]);
 
-                row.put("symbol", tokens[2]);
+                    mapValue(row, "ROA %", tokens[12]);
 
-                mapValue(row, "ROA", tokens[12]);
+                    mapValue(row, "ROE %", tokens[13]);
 
-                mapValue(row, "ROE", tokens[13]);
+                    mapValue(row, "Price", tokens[15]);
 
-                mapValue(row, "Price", tokens[15]);
+                    mapValue(row, "P/E", tokens[16]);
 
-                mapValue(row, "P/E", tokens[16]);
+                    mapValue(row, "P/BV", tokens[17]);
 
-                mapValue(row, "P/BV", tokens[17]);
+                    mapValue(row, "DVD %", tokens[18]);
 
-                mapValue(row, "DVD", tokens[18]);
+                    xd = tokens[25];
 
-                xd = tokens[25];
+                    try {
 
-                try {
+                        Calendar xdate = Calendar.getInstance(Locale.US);
+                        xdate.setTime(Formatter.xdDateFormat.parse(xd));
+                        xdMap.put(row.get("symbol"), xdate);
 
-                    Calendar xdate = Calendar.getInstance(Locale.US);
-                    xdate.setTime(xdDateFormat.parse(xd));
-                    xdMap.put(row.get("symbol"), xdate);
+                    } catch (Exception e) {
 
-                } catch (Exception e) {
+                    }
 
+                    if (tokens.length > 30) {
+                        row.put("name", tokens[28]);
+                        row.put("website", tokens[29]);
+                        row.put("policy", tokens[30]);
+                    }
+
+                    stockList.add(row);
                 }
 
-                stockList.add(row);
             }
-
         }
+
         return asOfDate;
     }
 
-    public void applyFilter(Map<String, Filter> filterList) {
+    public void applyFilter() {
 
-        boolean match;
+        if (resultList.isEmpty()) {
+            boolean match;
 
-        Set<String> filterSet = filterList.keySet();
-        Filter filter;
+            Set<String> filterSet = filterMap.keySet();
+            Filter filter;
 
-        for (Map<String, String> map: stockList) {
+            for (Map<String, String> map: stockList) {
 
-            match = true;
+                match = true;
 
-            for (String name: filterSet) {
+                for (String name: filterSet) {
 
-                filter = filterList.get(name);
-                try {
+                    filter = filterMap.get(name);
+                    try {
 
-                    if (filter.opt.equals("=")) {
+                        if (filter.opt.equals("=")) {
 
-                        match &= map.get(name).equals(filter.value);
+                            if (name.equals("Type") && filter.value.equals("Industrials")) {
+                                match &= map.get(name).startsWith("Industrial");
+                            } else {
+                                match &= map.get(name).equals(filter.value);
+                            }
 
-                    } if (filter.opt.equals("<")) {
+                        } if (filter.opt.equals("<")) {
 
-                        match &= Double.parseDouble(map.get(name)) <= Double.parseDouble(filter.value);
+                            match &= Double.parseDouble(map.get(name)) <= Double.parseDouble(filter.value);
 
-                    } else if (filter.opt.equals(">")) {
+                        } else if (filter.opt.equals(">")) {
 
-                        match &= Double.parseDouble(map.get(name)) >= Double.parseDouble(filter.value);
+                            match &= Double.parseDouble(map.get(name)) >= Double.parseDouble(filter.value);
+                        }
+
+                    } catch (Exception e) {
+                        match &= false;
                     }
 
-                } catch (Exception e) {
-                    match &= false;
+                }
+
+                if (match) {
+                    resultList.add(map);
                 }
 
             }
-
-            if (match) {
-                resultList.add(map);
-            }
-
         }
+
     }
 
     public List<Map<String, String>> resultList() {
         return resultList;
-    }
-
-    public void clearResult() {
-        resultList.clear();
     }
 
     public boolean isXDAfterNow(String symbol) {
@@ -188,19 +182,68 @@ public class SET {
         return false;
     }
 
-    public DateFormat xdDateFormat() {
-        return xdDateFormat;
+    public Map<String, Filter> getFilterMap() {
+        return filterMap;
+    }
+
+    public Filter getFilter(String name) {
+        return filterMap.get(name);
+    }
+
+    public void addFilter(String filterName, Filter filter) {
+        filterMap.put(filterName, filter);
+        resultList.clear();
+    }
+
+    public void removeFilter(String filterName) {
+        filterMap.remove(filterName);
+        resultList.clear();
+    }
+
+    private Map<String, String> getStock(String symbol) {
+        if (stockList!=null) {
+            String val;
+            for (Map<String, String> row:stockList) {
+                val = row.get("symbol");
+                if (val!=null && symbol.equals(val))
+                    return row;
+            }
+        }
+
+        return null;
+    }
+
+    public SETHistorical getSelectedHistorical() {
+        return selectedHistorical;
+    }
+
+    public void setSelectedHistorical(String symbol) {
+        this.selectedHistorical = new SETHistorical(symbol);
+
+        Map<String, String> stock = getStock(symbol);
+        this.selectedName = stock.get("name");
+        this.selectedWebsite = stock.get("website");
+        this.selectedPolicy = stock.get("policy");
     }
 
     public static class Filter {
+
+        public static final int TYPE = 0;
+        public static final int VALUE = 1;
+
+        public int type;
+
+        public String name;
 
         public String opt;
 
         public String value;
 
-        public Filter (String opt, String value) {
+        public Filter (String name, String opt, String value) {
             this.opt = opt;
             this.value = value;
+            this.name = name;
+            this.type = name.equals("Type")?TYPE:VALUE;
         }
     }
 

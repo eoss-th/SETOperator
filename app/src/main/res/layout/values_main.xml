@@ -48,7 +48,7 @@
                 android:textOn="Type"
                 android:textOff="Type"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -60,10 +60,10 @@
                 android:id="@+id/roa"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textOn="ROA"
-                android:textOff="ROA"
+                android:textOn="ROA %"
+                android:textOff="ROA %"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -75,10 +75,10 @@
                 android:id="@+id/roe"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textOn="ROE"
-                android:textOff="ROE"
+                android:textOn="ROE %"
+                android:textOff="ROE %"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -93,7 +93,7 @@
                 android:textOn="P/E"
                 android:textOff="P/E"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -108,7 +108,7 @@
                 android:textOn="P/BV"
                 android:textOff="P/BV"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
 
         <RelativeLayout
@@ -120,10 +120,10 @@
                 android:id="@+id/dvd"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textOn="DVD"
-                android:textOff="DVD"
+                android:textOn="DVD %"
+                android:textOff="DVD %"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
         </RelativeLayout>
         
         <RelativeLayout
@@ -138,12 +138,12 @@
                 android:textOn="Price"
                 android:textOff="Price"
                 android:textColor="#ffffff"
-                />
+                style="@android:style/Widget.Holo.Light.Button.Toggle" />
 
         </RelativeLayout>
         
             <Space
-                android:layout_width="40dp"
+                android:layout_width="20dp"
                 android:layout_height="wrap_content"
                 />
                 
@@ -153,7 +153,8 @@
         android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#000000" >
+        android:background="@android:color/black"
+        android:divider="@android:color/black">
 
     </ListView>
 

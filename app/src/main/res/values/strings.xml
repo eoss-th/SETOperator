@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="applicationId">558254014217245</string>
-    
     <string name="app_name">SET Operator</string>
-    <string name="menu_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="dummy_section_text">Section %1d is just a dummy section.</string>
-    <string name="demo_external_activity">Demo External Activity</string>
-    <string name="demo_collection">Demo Collection</string>
 
     <string-array name="stock_type">
         <item>-</item>
@@ -20,6 +13,34 @@
         <item>Resources</item>
         <item>Services</item>
         <item>Technology</item>
+    </string-array>
+
+    <!-- Bot Keywords Order by Priorities-->
+    <string-array name="bot_contexts">
+        <item>หุ้น</item>
+        <item>เติบโต</item>
+        <item>ปันผล</item>
+        <item>ยั่งยืน</item>
+        <item>กำไร</item>
+        <item>ขาดทุน</item>
+        <item>ROE</item>
+        <item>ROA</item>
+        <item>ROA</item>
+    </string-array>
+
+    <string-array name="bot_questions">
+        <item>อะไร</item>
+        <item>หรือ</item>
+        <item>ไหน</item>
+        <item>เหรอ</item>
+        <item>มั้ย</item>
+        <item>มะ</item>
+        <item>หรือไม่</item>
+        <item>ยังไง</item>
+        <item>แล้วไง</item>
+        <item>ไหม</item>
+        <item>รึป่าว</item>
+        <item>แน่ใจ</item>
     </string-array>
 
 </resources>

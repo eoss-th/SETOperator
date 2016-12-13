@@ -3,6 +3,7 @@ package com.th.eoss.setoperator;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -10,19 +11,16 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.ToggleButton;
 
+import com.th.eoss.util.SET;
+
 public class StockFilterDialog extends Dialog {
 
-	public static final int TYPE = 0;
-	public static final int VALUE = 1;
 
-	public StockFilterDialog(final Context context, final ToggleButton toggleButton, final FilterListener filterListener, String opt, String value) {
+	public StockFilterDialog(final Context context, final SET.Filter filter, final FilterListener filterListener) {
 		super(context, R.style.Dialog_Filter);
 
-		final String filterName = toggleButton.getTextOff().toString();
-		final int type = filterName.equals("Type")?TYPE:VALUE;
-
 		setContentView(R.layout.filter);
-		setTitle(filterName);
+		setTitle(filter.name);
 
 		Spinner spinner = (Spinner) findViewById(R.id.spinnerOperators);	
 		EditText editValue = (EditText) findViewById(R.id.editValue);
@@ -35,25 +33,19 @@ public class StockFilterDialog extends Dialog {
 				Spinner spinner = (Spinner) findViewById(R.id.spinnerOperators);	
 				EditText editValue = (EditText) findViewById(R.id.editValue);
 
-				int orange = context.getResources().getColor(android.R.color.holo_orange_light);
+				int orange = ContextCompat.getColor(context, android.R.color.holo_orange_light);
+                int blue = ContextCompat.getColor(context, android.R.color.holo_blue_bright);
 
-				if (type==TYPE) {
+				if (filter.type==SET.Filter.TYPE) {
 
-					filterListener.onValue(filterName, "=", spinner.getSelectedItem().toString());
+					filterListener.onValue(filter.name, "=", spinner.getSelectedItem().toString());
 				}
 
-				else if (type==VALUE) {
+				else if (filter.type==SET.Filter.VALUE) {
 
-					filterListener.onValue(filterName, spinner.getSelectedItem().toString(), editValue.getText().toString());
-
-					toggleButton.setTextOn(toggleButton.getTextOff()+"\n"
-							+spinner.getSelectedItem().toString()
-							+editValue.getText().toString());
-
+					filterListener.onValue(filter.name, spinner.getSelectedItem().toString(), editValue.getText().toString());
 				}
 
-				toggleButton.setChecked(true);
-				toggleButton.setTextColor(orange);
 				dismiss();
 			}
 
@@ -64,12 +56,7 @@ public class StockFilterDialog extends Dialog {
 			@Override
 			public void onClick(View view) {
 
-				filterListener.onClearValue(filterName);
-
-				int white = Color.parseColor("#FFFFFF");
-				toggleButton.setTextColor(white);
-				toggleButton.setChecked(false);
-				toggleButton.setTextOn(toggleButton.getTextOff());
+				filterListener.onClearValue(filter.name);
 
 				dismiss();
 
@@ -77,7 +64,7 @@ public class StockFilterDialog extends Dialog {
 
 		});
 
-		if ( type==TYPE ) {
+		if ( filter.type==SET.Filter.TYPE ) {
 
 			String [] selects = context.getResources().getStringArray(R.array.stock_type);
 
@@ -89,35 +76,35 @@ public class StockFilterDialog extends Dialog {
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			spinner.setAdapter(adapter);
 
-			if (value!=null) {
+			if (filter.value!=null) {
 				for (int i=0;i<selects.length;i++)
-					if (selects[i].equals(value)) {
+					if (selects[i].equals(filter.value)) {
 						spinner.setSelection(i);
 						break;
 					}			
 			} 
 
-		} else if ( type==VALUE ) {
+		} else if ( filter.type==SET.Filter.VALUE ) {
 
 			String [] selects;
 
-			if (filterName.equals("ROA") || filterName.equals("ROE") || filterName.equals("DVD")) {
+			if (filter.name.equals("ROA %") || filter.name.equals("ROE %") || filter.name.equals("DVD %")) {
 				selects = new String[]{ ">", "<"};
 			} else {
 				selects = new String[]{ "<", ">"};				
 			}
 
-			editValue.setText(value);
+			editValue.setText(filter.value);
 
 			ArrayAdapter<String> adapter = 
 					new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, selects);
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 			spinner.setAdapter(adapter);
 
-			if (opt!=null) {
+			if (filter.opt!=null) {
 				for (int i=0;i <selects.length; i++) {
 
-					if (opt.equals(selects[i])) {
+					if (filter.opt.equals(selects[i])) {
 						spinner.setSelection(i);
 						break;				
 					}

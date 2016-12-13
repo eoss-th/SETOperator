@@ -3,8 +3,6 @@ package com.th.eoss.setoperator;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -13,19 +11,19 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+
+import com.th.eoss.util.Formatter;
 
 /**
  * 
@@ -35,26 +33,26 @@ import android.widget.TextView;
  */
 public class XDFragment extends Fragment implements SETOperatorListener {
 
+	static List<Map<String, String>> stockList;
+
+    static Map<String, Calendar> xdMap;
+
+	static SimpleAdapter adapter;
+
 	ListView stockListView;
 
-	List<Map<String, String>> stockList, resultList;
-
-	SimpleAdapter adapter;
-
-	Map<String, Calendar> xdMap = new HashMap<String, Calendar>();
-
-	Handler handler = new Handler();
-
-	DateFormat xdDateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.US);
-
 	@Override
-	public void onAttach(Activity activity) {
+	public void onAttach(Context context) {
 
-		super.onAttach(activity);
+		super.onAttach(context);
 
-		stockList = new ArrayList<Map<String, String>>();
-		
-		resultList = new ArrayList<Map<String, String>>();
+		if (stockList==null) {
+			stockList = new ArrayList<Map<String, String>>();
+		}
+
+        if (xdMap==null) {
+            xdMap = new HashMap<>();
+        }
 	}
 
 	@Override
@@ -64,11 +62,24 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 		View rootView = inflater.inflate(R.layout.xd_main, container, false);
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
-		
-		adapter = new StockAdapter(getActivity(), resultList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
-			
+
+        if (adapter==null) {
+            adapter = new StockAdapter(getActivity(), stockList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
+        }
+
 		stockListView.setAdapter(adapter);
-		
+
+		stockListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+				Map<String, String> set = stockList.get(i);
+				MainActivity.viewPager.setCurrentItem(3);
+				MainActivity.historicalFragment.load(set);
+
+			}
+		});
+
 		return rootView;
 	}
 
@@ -76,7 +87,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 	public void onResume() {
 		super.onResume();
 
-		if (resultList.isEmpty()) {
+		if (stockList.isEmpty()) {
 			
 			load();
 			
@@ -87,8 +98,8 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 	@Override
 	public void onPause() {
 		super.onPause();
-		
-		resultList.clear();
+
+        stockList.clear();
 		adapter.notifyDataSetChanged();
 	}
 
@@ -122,7 +133,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 								map.put("date", line.substring(line.indexOf(": ") + 2));
 
 								Calendar date = Calendar.getInstance(Locale.US);
-								date.setTime(xdDateFormat.parse(map.get("date")));							
+								date.setTime(Formatter.xdDateFormat.parse(map.get("date")));
 								xdMap.put(map.get("symbol"), date);
 
 								stockList.add(map);
@@ -131,17 +142,11 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 														
 						}
 						
-						handler.post(new Runnable() {
+						SingleHandler.handler.post(new Runnable() {
 
 							@Override
 							public void run() {
 
-								resultList.clear();
-
-								for (Map<String, String> map: stockList) {
-									resultList.add(map);
-								}
-								
 								adapter.notifyDataSetChanged();
 
 							}
@@ -161,11 +166,6 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 	class StockAdapter extends SimpleAdapter {
 
-		int red = getResources().getColor(android.R.color.holo_red_light);
-		int green = getResources().getColor(android.R.color.holo_green_light);
-		int white = Color.parseColor("#FFFFFF");
-		int blue = getResources().getColor(android.R.color.holo_blue_light);
-
 		public StockAdapter(Context context,
 				List<? extends Map<String, ?>> data, int resource,
 						String[] from, int[] to) {			
@@ -175,13 +175,14 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 		@Override
 		public View getView(final int position, View convertView,
 				ViewGroup parent) {
+
 			View v = super.getView(position, convertView, parent);
 
 			TextView name = (TextView) v.findViewById(R.id.name);
 
 			final String symbol = name.getText().toString();
 
-			Button plus = (Button) ((ViewGroup) v).findViewById(R.id.plus);
+			Button plus = (Button) v.findViewById(R.id.plus);
 
 			plus.setOnClickListener(new OnClickListener() {
 
@@ -200,11 +201,11 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 				if (x.after(Calendar.getInstance(Locale.US))) {
 
-					xd.setTextColor(green);
+					xd.setTextColor(Theme.green);
 
 				} else {
 
-					xd.setTextColor(red);
+					xd.setTextColor(Theme.red);
 
 				}			
 
@@ -217,8 +218,8 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 	@Override
 	public void onWatch(String symbol) {
-		MainActivity.actionBar.setSelectedNavigationItem(0);
-		MainActivity.realtimeFragment.addSymbol(symbol);
+		MainActivity.viewPager.setCurrentItem(0);
+		MainActivity.watchFragment.addSymbol(symbol);
 	}
 
 	@Override
