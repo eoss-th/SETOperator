@@ -11,7 +11,18 @@
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
         android:paddingTop="10dp"
+        android:descendantFocusability="beforeDescendants"
+        android:focusableInTouchMode="true"
         >
+
+        <EditText
+            android:id="@+id/symbol"
+            android:layout_width="100dp"
+            android:drawableLeft="@android:drawable/ic_menu_search"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:layout_gravity="center"
+            />
 
         <ToggleButton
             android:id="@+id/toggleButton1"

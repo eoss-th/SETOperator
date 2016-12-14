@@ -28,6 +28,10 @@ public class SETQuote {
 
     public String date;
 
+    public boolean marketOpen;
+
+    public float prior;
+
     public float open;
 
     public float high;
@@ -37,6 +41,8 @@ public class SETQuote {
     public float last;
 
     public float chg;
+
+    public float chgPercent;
 
     public long volume;
 
@@ -59,21 +65,28 @@ public class SETQuote {
             }
 
             try {
-                this.last = numberFormat.parse(body.child(1).child(1).text()).floatValue();
+                String marketStatus = head.child(1).child(0).text().trim();
+                marketOpen = marketStatus.contains("Open(I)") || marketStatus.contains("Open(II)");
             } catch (Exception e) {
 
             }
 
             try {
-                this.chg = numberFormat.parse(body.child(3).child(1).text()).floatValue();
+                this.prior = numberFormat.parse(body.child(4).child(1).text()).floatValue();
             } catch (Exception e) {
 
+            }
+
+            try {
+                this.last = numberFormat.parse(body.child(1).child(1).text()).floatValue();
+            } catch (Exception e) {
+                this.last = this.prior;
             }
 
             try {
                 this.open = numberFormat.parse(body.child(5).child(1).text()).floatValue();
             } catch (Exception e) {
-
+                this.open = this.prior;
             }
 
             try {
@@ -93,18 +106,43 @@ public class SETQuote {
             } catch (Exception e) {
 
             }
+
+            if (marketOpen) {
+
+                this.chg = round(this.last - this.open);
+                this.chgPercent = this.chg * 100 / this.open;
+
+            } else {
+
+                try {
+                    this.chg = numberFormat.parse(body.child(2).child(1).text()).floatValue();
+                } catch (Exception e) {
+
+                }
+
+                try {
+                    this.chgPercent = numberFormat.parse(body.child(3).child(1).text()).floatValue();
+                } catch (Exception e) {
+
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("\t" + this.symbol);
         }
     }
 
+    private float round (float num) {
+        return (float) (Math.round(num * 100.0)/100.0);
+    }
+
     public String toString() {
         return String.format("%s %s open=%.2f\thigh=%.2f\tlow=%.2f\tclose=%.2f\tchg=%.2f\tvolume=%d",symbol,date,open,high,low,last,chg,volume);
     }
 
-    public interface SETQuoteListener {
-        void onLoaded(SETQuote quote);
+    public static void main(String[]args) {
+        System.out.println(new SETQuote("INTUCH").marketOpen);
     }
 
 }

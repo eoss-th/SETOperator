@@ -24,9 +24,9 @@ import android.widget.ToggleButton;
 
 public class ValuesFragment extends Fragment implements OnClickListener, FilterListener, SETOperatorListener {
 
-    static Map<String, ToggleButton> toggleButtonMap;
+    Map<String, ToggleButton> toggleButtonMap;
 
-	static SimpleAdapter adapter;
+	SimpleAdapter adapter;
 
 	ListView stockListView;
 
@@ -39,9 +39,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
         super.onAttach(context);
 
-        if (toggleButtonMap==null) {
-            toggleButtonMap = new HashMap<>();
-        }
+        toggleButtonMap = new HashMap<>();
     }
 
 	@Override
@@ -87,13 +85,11 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
-        if (adapter==null) {
-            adapter = new StockAdapter(getActivity(), SET.instance().resultList(),
-                    R.layout.values_row, new String[] { "symbol", "ROA %", "ROE %",
-                    "P/E", "P/BV", "DVD %", "Price" }, new int[] { R.id.name,
-                    R.id.roa, R.id.roe, R.id.pe, R.id.pbv, R.id.dvd,
-                    R.id.price });
-        }
+        adapter = new StockAdapter(getActivity(), SET.instance().resultList(),
+                R.layout.values_row, new String[] { "symbol", "ROA %", "ROE %",
+                "P/E", "P/BV", "DVD %", "Price" }, new int[] { R.id.name,
+                R.id.roa, R.id.roe, R.id.pe, R.id.pbv, R.id.dvd,
+                R.id.price });
 
 		stockListView.setAdapter(adapter);
 
@@ -102,8 +98,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
                 Map<String, String> set = SET.instance().resultList().get(i);
-                MainActivity.viewPager.setCurrentItem(3);
-                MainActivity.historicalFragment.load(set);
+				((MainActivity)getActivity()).historical(set);
 
             }
         });
@@ -282,8 +277,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 	@Override
 	public void onWatch(String symbol) {
-		MainActivity.viewPager.setCurrentItem(0);
-		MainActivity.watchFragment.addSymbol(symbol);
+        ((MainActivity)getActivity()).watch(symbol);
 	}
 
 	@Override

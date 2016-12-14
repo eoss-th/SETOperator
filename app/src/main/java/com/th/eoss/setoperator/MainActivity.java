@@ -8,84 +8,67 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.text.InputFilter;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.TextView;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+
+import java.util.Map;
 
 public class MainActivity extends FragmentActivity {
 
-	static WatchFragment watchFragment;
-	
-	static ValuesFragment valuesFragment;
-	
-	static XDFragment xdFragment;
+	WatchFragment watchFragment;
 
-    static HistoricalFragment historicalFragment;
+    ValuesFragment valuesFragment;
 
-	static ViewPager viewPager;
+    XDFragment xdFragment;
 
-	public void onCreate(Bundle savedInstanceState) {
+    HistoricalFragment historicalFragment;
+
+    ViewPager viewPager;
+
+    InterstitialAd mInterstitialAd;
+
+    AdView mAdView;
+
+    public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 				
-		if (watchFragment ==null) {
-			watchFragment = new WatchFragment();
-		}
-		
-		if (valuesFragment ==null) {
-			valuesFragment = new ValuesFragment();
-		}
-		
-		if (xdFragment==null) {
-			xdFragment = new XDFragment();
-		}
-
-        if (historicalFragment ==null) {
-            historicalFragment = new HistoricalFragment();
-        }
+        watchFragment = new WatchFragment();
+        valuesFragment = new ValuesFragment();
+        xdFragment = new XDFragment();
+        historicalFragment = new HistoricalFragment();
 
 		setContentView(R.layout.activity_main);
-
-        final EditText searchText = (EditText) findViewById(R.id.symbol);
-
-        searchText.setImeOptions(EditorInfo.IME_ACTION_DONE);
-
-        searchText.setFilters(new InputFilter[] {new InputFilter.AllCaps()});
-
-        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    String symbol = searchText.getText().toString().toUpperCase();
-                    watchFragment.addSymbol(symbol);
-                    searchText.setText("");
-                }
-                return false;
-            }
-
-        });
 
 		viewPager = (ViewPager) findViewById(R.id.pager);
 		viewPager.setAdapter(new AppSectionsPagerAdapter(getSupportFragmentManager()));
 
-		TabLayout tabLayout = (TabLayout) findViewById(R.id.tab);
+		final TabLayout tabLayout = (TabLayout) findViewById(R.id.tab);
 		tabLayout.setupWithViewPager(viewPager);
-		tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+
+        int [] icons = {android.R.drawable.ic_menu_view, android.R.drawable.ic_menu_sort_by_size, android.R.drawable.ic_menu_today, android.R.drawable.ic_menu_zoom};
+
+		TextView tab;
+        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+			tab = new TextView(getApplicationContext());
+            tab.setCompoundDrawablesWithIntrinsicBounds(0, icons[i], 0, 0);
+            tabLayout.getTabAt(i).setCustomView(tab);
+        }
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
 
 			@Override
 			public void onTabSelected(TabLayout.Tab tab) {
 
-                if (tab.getPosition()!=0) {
-                    searchText.setVisibility(View.GONE);
+                if (mInterstitialAd.isLoaded() /*&& tab.getPosition()==3*/) {
+                    mInterstitialAd.show();
                 } else {
-                    searchText.setVisibility(View.VISIBLE);
-                    searchText.clearFocus();
+                    viewPager.setCurrentItem(tab.getPosition());
                 }
-
-                viewPager.setCurrentItem(tab.getPosition());
 			}
 
 			@Override
@@ -101,9 +84,56 @@ public class MainActivity extends FragmentActivity {
 
         Theme.register(this);
         SingleHandler.handler = new Handler();
-	}
 
-	public class AppSectionsPagerAdapter extends FragmentPagerAdapter {
+		MobileAds.initialize(getApplicationContext(), getString(R.string.app_ad_id));
+
+        mInterstitialAd = new InterstitialAd(this);
+
+        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+                viewPager.setCurrentItem(tabLayout.getSelectedTabPosition());
+            }
+        });
+
+        mAdView = (AdView) findViewById(R.id.adView);
+
+        requestNewBanner();
+        requestNewInterstitial();
+    }
+
+    private void requestNewBanner() {
+
+        /*
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                .addTestDevice("1FC15A5092E4F30DF707EB2806644EB6")  // An example device ID
+                .build();
+        */
+
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        mAdView.loadAd(adRequest);
+    }
+
+    private void requestNewInterstitial() {
+
+        /*
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                .addTestDevice("1FC15A5092E4F30DF707EB2806644EB6")  // An example device ID
+                .build();
+        */
+
+        AdRequest adRequest = new AdRequest.Builder().build();
+
+        mInterstitialAd.loadAd(adRequest);
+    }
+
+    public class AppSectionsPagerAdapter extends FragmentPagerAdapter {
 
 		String [] titles = {"Watch", "Values", "XD", "Historical"};
 
@@ -133,4 +163,13 @@ public class MainActivity extends FragmentActivity {
 		}
 	}
 
+    void watch(String symbol) {
+        viewPager.setCurrentItem(0);
+        watchFragment.addSymbol(symbol);
+    }
+
+    void historical(Map<String, String> set) {
+        viewPager.setCurrentItem(3);
+        historicalFragment.load(set);
+    }
 }

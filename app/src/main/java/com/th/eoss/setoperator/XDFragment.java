@@ -33,11 +33,11 @@ import com.th.eoss.util.Formatter;
  */
 public class XDFragment extends Fragment implements SETOperatorListener {
 
-	static List<Map<String, String>> stockList;
+	List<Map<String, String>> stockList;
 
-    static Map<String, Calendar> xdMap;
+	Map<String, Calendar> xdMap;
 
-	static SimpleAdapter adapter;
+	SimpleAdapter adapter;
 
 	ListView stockListView;
 
@@ -63,9 +63,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
-        if (adapter==null) {
-            adapter = new StockAdapter(getActivity(), stockList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
-        }
+		adapter = new StockAdapter(getActivity(), stockList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
 
 		stockListView.setAdapter(adapter);
 
@@ -74,8 +72,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
 				Map<String, String> set = stockList.get(i);
-				MainActivity.viewPager.setCurrentItem(3);
-				MainActivity.historicalFragment.load(set);
+				((MainActivity)getActivity()).historical(set);
 
 			}
 		});
@@ -218,8 +215,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 	@Override
 	public void onWatch(String symbol) {
-		MainActivity.viewPager.setCurrentItem(0);
-		MainActivity.watchFragment.addSymbol(symbol);
+		((MainActivity)getActivity()).watch(symbol);
 	}
 
 	@Override

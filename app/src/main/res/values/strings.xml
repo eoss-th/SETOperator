@@ -15,32 +15,10 @@
         <item>Technology</item>
     </string-array>
 
-    <!-- Bot Keywords Order by Priorities-->
-    <string-array name="bot_contexts">
-        <item>หุ้น</item>
-        <item>เติบโต</item>
-        <item>ปันผล</item>
-        <item>ยั่งยืน</item>
-        <item>กำไร</item>
-        <item>ขาดทุน</item>
-        <item>ROE</item>
-        <item>ROA</item>
-        <item>ROA</item>
-    </string-array>
+    <string name="app_ad_id">ca-app-pub-2408994207086484~9876816650</string>
 
-    <string-array name="bot_questions">
-        <item>อะไร</item>
-        <item>หรือ</item>
-        <item>ไหน</item>
-        <item>เหรอ</item>
-        <item>มั้ย</item>
-        <item>มะ</item>
-        <item>หรือไม่</item>
-        <item>ยังไง</item>
-        <item>แล้วไง</item>
-        <item>ไหม</item>
-        <item>รึป่าว</item>
-        <item>แน่ใจ</item>
-    </string-array>
+    <string name="banner_ad_unit_id">ca-app-pub-2408994207086484/2213949050</string>
+
+    <string name="interstitial_ad_unit_id">ca-app-pub-2408994207086484/2212119057</string>
 
 </resources>
