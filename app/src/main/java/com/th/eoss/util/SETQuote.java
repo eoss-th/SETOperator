@@ -110,7 +110,7 @@ public class SETQuote {
             if (marketOpen) {
 
                 this.chg = round(this.last - this.open);
-                this.chgPercent = this.chg * 100 / this.open;
+                this.chgPercent = round(this.chg * 100 / this.open);
 
             } else {
 

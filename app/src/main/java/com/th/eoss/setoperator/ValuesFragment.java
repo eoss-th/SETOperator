@@ -34,12 +34,8 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 	TextView typeText;
 
-    @Override
-    public void onAttach(Context context) {
-
-        super.onAttach(context);
-
-        toggleButtonMap = new HashMap<>();
+    MainActivity mainActivity() {
+        return (MainActivity) getActivity();
     }
 
 	@Override
@@ -48,7 +44,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 		View rootView = inflater.inflate(R.layout.values_main, container, false);
 
-        toggleButtonMap.clear();
+        toggleButtonMap = new HashMap<>();
 
 		ToggleButton tb;
 		tb = (ToggleButton) rootView.findViewById(R.id.type);
@@ -85,7 +81,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
-        adapter = new StockAdapter(getActivity(), SET.instance().resultList(),
+        adapter = new StockAdapter(getActivity(), SET.instance().filteredList(),
                 R.layout.values_row, new String[] { "symbol", "ROA %", "ROE %",
                 "P/E", "P/BV", "DVD %", "Price" }, new int[] { R.id.name,
                 R.id.roa, R.id.roe, R.id.pe, R.id.pbv, R.id.dvd,
@@ -97,8 +93,7 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-                Map<String, String> set = SET.instance().resultList().get(i);
-				((MainActivity)getActivity()).historical(set);
+                mainActivity().historical(SET.instance().filteredList().get(i).get("symbol"));
 
             }
         });
@@ -109,39 +104,35 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 	@Override
 	public void onResume() {
 		super.onResume();
-        load();
+        loadSET();
     }
 
-	void load() {
+    void loadSET() {
 
-		new Thread() {
+        new Thread() {
 
-			public void run() {
+            public void run() {
 
-				try {
+                try {
 
-					final String asOfDate = SET.instance().load();
+                    SET.instance().load();
 
-					SingleHandler.handler.post(new Runnable() {
 
-						@Override
-						public void run() {
+                    SingleHandler.handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            applyFilter();
+                        }
+                    });
 
-							dateText.setText(asOfDate);
-							applyFilter();
-								
-						}
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
-					});
+        }.start();
 
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-		}.start();
-
-	}
+    }
 
 	class StockAdapter extends SimpleAdapter {
 
@@ -250,11 +241,11 @@ public class ValuesFragment extends Fragment implements OnClickListener, FilterL
 
 	void applyFilter() {
 
-		SET.instance().applyFilter();
+        SET.instance().applyFilter();
 
         updateTogglesText();
 
-		adapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
 	}
 
 	@Override

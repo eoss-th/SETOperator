@@ -76,7 +76,12 @@ public class SpeechBundle {
         myHashAlarm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "" + System.currentTimeMillis());
         */
 
-        textToSpeech.speak(get(key), TextToSpeech.QUEUE_ADD, null, "");
+        String text = get(key);
+
+        if (text.isEmpty())
+            text = key;
+
+        textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null, "");
     }
 
 }

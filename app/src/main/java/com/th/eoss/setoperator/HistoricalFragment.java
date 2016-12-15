@@ -39,6 +39,10 @@ public class HistoricalFragment extends Fragment {
     TextView website;
 	TextView policyText;
 
+    SETHistorical selectedHistorical;
+
+    String selectedName, selectedWebsite, selectedPolicy;
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 							 Bundle savedInstanceState) {
@@ -81,19 +85,22 @@ public class HistoricalFragment extends Fragment {
 		reloadChart();
 	}
 
-	void load(Map<String, String> set) {
+	void load(final String symbol) {
 
-		final String symbol = set.get("symbol");
+        Map<String, String> stock = SET.instance().getStock(symbol);
+        this.selectedName = stock.get("name");
+        this.selectedWebsite = stock.get("website");
+        this.selectedPolicy = stock.get("policy");
 
-		combinedChart.setNoDataText("Loading...");
+        combinedChart.setNoDataText("Loading...");
 
 		new Thread() {
 
 			public void run() {
 
-				SET.instance().setSelectedHistorical(symbol);
+                selectedHistorical = new SETHistorical(symbol);
 
-				SingleHandler.handler.post(new Runnable() {
+                SingleHandler.handler.post(new Runnable() {
 
 					@Override
 					public void run() {
@@ -110,13 +117,11 @@ public class HistoricalFragment extends Fragment {
 
 	private void reloadChart() {
 
-		if (SET.instance().getSelectedHistorical()!=null ) {
-
-			SETHistorical setHistorical = SET.instance().getSelectedHistorical();
+		if (selectedHistorical!=null ) {
 
 			combinedChart.clear();
 
-			List<SETHistorical.Historical> historicals = setHistorical.historicals();
+			List<SETHistorical.Historical> historicals = selectedHistorical.historicals();
 
 			final List<String> asOfDates = new ArrayList<>();
 			List<BarEntry> priceEntries = new ArrayList<>();
@@ -185,10 +190,10 @@ public class HistoricalFragment extends Fragment {
 
 			combinedChart.invalidate();
 
-            policyText.setText(SET.instance().selectedPolicy);
+            policyText.setText(selectedPolicy);
 
-            final String url = SET.instance().selectedWebsite;
-            website.setText(SET.instance().selectedName);
+            final String url = selectedWebsite;
+            website.setText(selectedName);
             website.setEnabled(url!=null && url.trim().isEmpty()==false);
 
             website.setOnClickListener(new View.OnClickListener() {

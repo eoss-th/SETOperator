@@ -16,17 +16,15 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 
-import java.util.Map;
-
 public class MainActivity extends FragmentActivity {
 
-	WatchFragment watchFragment;
+	WatchFragment watchFragment = new WatchFragment();
 
-    ValuesFragment valuesFragment;
+    ValuesFragment valuesFragment = new ValuesFragment();
 
-    XDFragment xdFragment;
+    XDFragment xdFragment = new XDFragment();
 
-    HistoricalFragment historicalFragment;
+    HistoricalFragment historicalFragment = new HistoricalFragment();
 
     ViewPager viewPager;
 
@@ -37,11 +35,6 @@ public class MainActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 				
-        watchFragment = new WatchFragment();
-        valuesFragment = new ValuesFragment();
-        xdFragment = new XDFragment();
-        historicalFragment = new HistoricalFragment();
-
 		setContentView(R.layout.activity_main);
 
 		viewPager = (ViewPager) findViewById(R.id.pager);
@@ -64,7 +57,7 @@ public class MainActivity extends FragmentActivity {
 			@Override
 			public void onTabSelected(TabLayout.Tab tab) {
 
-                if (mInterstitialAd.isLoaded() /*&& tab.getPosition()==3*/) {
+                if (mInterstitialAd.isLoaded() && tab.getPosition()==3) {
                     mInterstitialAd.show();
                 } else {
                     viewPager.setCurrentItem(tab.getPosition());
@@ -103,6 +96,7 @@ public class MainActivity extends FragmentActivity {
 
         requestNewBanner();
         requestNewInterstitial();
+
     }
 
     private void requestNewBanner() {
@@ -168,8 +162,9 @@ public class MainActivity extends FragmentActivity {
         watchFragment.addSymbol(symbol);
     }
 
-    void historical(Map<String, String> set) {
+    void historical(String symbol) {
+
         viewPager.setCurrentItem(3);
-        historicalFragment.load(set);
+        historicalFragment.load(symbol);
     }
 }

@@ -1,14 +1,22 @@
 package com.th.eoss.setoperator;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
@@ -34,8 +42,15 @@ import com.th.eoss.util.Formatter;
 import com.th.eoss.util.SETDividend;
 import com.th.eoss.util.SETQuote;
 
-public class WatchFragment extends Fragment {
+public class WatchFragment extends Fragment implements TextToSpeech.OnInitListener {
 
+	List<Map<String, String>> watchList;
+
+    TextToSpeech textToSpeech;
+
+	Timer timer;
+
+	SpeechBundle speechBundle;
 
 	SimpleAdapter adapter;
 
@@ -49,7 +64,16 @@ public class WatchFragment extends Fragment {
         return (MainActivity) getActivity();
     }
 
+	@Override
+	public void onAttach(Context context) {
+		super.onAttach(context);
 
+        Log.v("WATCH", "Attached");
+
+        this.textToSpeech = new TextToSpeech(context, this, "com.google.android.textToSpeech");
+
+        loadWatchList();
+	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -87,12 +111,10 @@ public class WatchFragment extends Fragment {
             public void onClick(View view) {
 
                 if (toggleSpeakButton.isChecked()) {
-                    mainActivity().speakBundle("greeting");
+                    speechBundle.speak("greeting");
                 }
             }
         });
-
-        watchList = mainActivity().watchList;
 
         adapter = new StockAdapter(getActivity(), watchList, R.layout.watch_row, new String[]{"symbol", "price", "change", "dvd", "xd"}, new int[]{R.id.name, R.id.last, R.id.change, R.id.dvd, R.id.xdDate});
 
@@ -102,8 +124,7 @@ public class WatchFragment extends Fragment {
 			@Override
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-				Map<String, String> set = watchList.get(i);
-				((MainActivity)getActivity()).historical(set);
+				mainActivity().historical(watchList.get(i).get("symbol"));
 			}
 		});
 
@@ -113,17 +134,204 @@ public class WatchFragment extends Fragment {
 		return rootView;
 	}
 
+	@Override
+	public void onInit(int status) {
+
+		if (status == TextToSpeech.SUCCESS) {
+
+			int result = textToSpeech.setLanguage(new Locale("th"));
+
+			if (result == TextToSpeech.LANG_MISSING_DATA
+					|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
+
+				Log.e("TTS", "This Language is not supported");
+
+				textToSpeech.setLanguage(Locale.US);
+				speechBundle = SpeechBundle.create(textToSpeech, "en");
+
+			} else {
+				speechBundle = SpeechBundle.create(textToSpeech, "th");
+			}
+
+			textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+
+				@Override
+				public void onStart(String s) {
+					SingleHandler.handler.post(new Runnable() {
+
+						@Override
+						public void run() {
+							toggleSpeakButton.setEnabled(false);
+							toggleSpeakButton.setBackgroundResource(R.drawable.bot_speaking);
+						}
+
+					});
+				}
+
+				@Override
+				public void onDone(String s) {
+					SingleHandler.handler.post(new Runnable() {
+
+						@Override
+						public void run() {
+							toggleSpeakButton.setBackgroundResource(R.drawable.bot);
+							toggleSpeakButton.setEnabled(true);
+						}
+
+					});
+				}
+
+				@Override
+				public void onError(String s) {
+
+				}
+			});
+
+		} else {
+			Log.e("TTS", "Initilization Failed!");
+			toggleSpeakButton.setEnabled(false);
+		}
+	}
+
+	void startTimer() {
+
+        if (timer==null) {
+            timer = new Timer();
+
+            timer.schedule(new TimerTask() {
+
+                private boolean taskStarted;
+                private boolean lastMarketStatusIsClosed;
+
+                @Override
+                public void run() {
+
+                    List<Map<String, String>> resultList = new ArrayList<Map<String, String>>();
+
+                    synchronized (watchList) {
+
+                        for (Map<String, String> s: watchList) {
+                            resultList.add(s);
+                        }
+                    }
+
+                    final StringBuilder sb = new StringBuilder();
+
+                    boolean marketOpen = false;
+                    for (Map<String, String> s:resultList) {
+
+                        try {
+
+                            SETQuote q = new SETQuote(s.get("symbol"));
+
+                            marketOpen |= q.marketOpen;
+
+                            if (q.last==0.0) continue; //Connection Error, Skip
+
+                            s.put("price", "" + q.last);
+                            s.put("change", Formatter.decimalFormat.format(q.chgPercent));
+
+                            if (q.chg != 0) {
+
+                                String symbol = s.get("symbol");
+
+                                String t = "";
+                                if (symbol.length() <= 3) {
+
+                                    for (int i=0; i<symbol.length(); i++) {
+                                        t += symbol.charAt(i) + "  ";
+                                    }
+
+                                } else {
+                                    t = symbol;
+                                }
+
+                                if (q.chg > 0)
+                                    sb.append(t + " " + speechBundle.get("up") + " " + q.chg + " " + speechBundle.get("bath") + ", " + speechBundle.get("price") + " " + q.last + " " + speechBundle.get("bath"));
+                                else if (q.chg < 0)
+                                    sb.append(t + " " + speechBundle.get("down") + " " + Math.abs(q.chg) + " " + speechBundle.get("bath") + ", " + speechBundle.get("price") + " " + q.last + " " + speechBundle.get("bath"));
+
+                                sb.append(",  ");
+
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.e("Error", e.getMessage());
+                            break;
+
+                        }
+
+                    }//End loop
+
+                    final boolean isMarketClosed = !marketOpen;
+                    SingleHandler.handler.post(new Runnable() {
+
+                        @Override
+                        public void run() {
+
+                            adapter.notifyDataSetChanged();
+
+                            //Wakeup when just open
+                            if ((taskStarted==false || lastMarketStatusIsClosed) && isMarketClosed==false && toggleSpeakButton.isChecked()==false ) {
+
+                                speechBundle.speak("wake");
+                                toggleSpeakButton.setChecked(true);
+                            }
+
+                            if (isMarketClosed && toggleSpeakButton.isChecked()) {
+
+                                speechBundle.speak("sleeping");
+                                toggleSpeakButton.setChecked(false);
+                            }
+
+                            if ( toggleSpeakButton.isChecked() && sb.length()>0 ) {
+
+                                speechBundle.speak(sb.toString());
+
+                            }
+
+                            //Goodbye when just closed
+                            if (lastMarketStatusIsClosed==false && isMarketClosed && toggleSpeakButton.isChecked() ) {
+
+                                speechBundle.speak("goodbye");
+                                toggleSpeakButton.setChecked(false);
+                            }
+
+                            lastMarketStatusIsClosed = isMarketClosed;
+                            taskStarted = true;
+                        }
+
+                    });
+
+                }
+
+
+            }, 0,  60 * 1000 * 1);
+        }
+
+	}
+
     @Override
     public void onResume() {
         super.onResume();
-        mainActivity().startTimer();
+        startTimer();
     }
 
     @Override
-	public void onPause() {
-		super.onPause();
-		mainActivity().stopTimer();
-	}
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (timer!=null) {
+            timer.cancel();
+        }
+
+        // Don't forget to shutdown textToSpeech!
+        textToSpeech.stop();
+        textToSpeech.shutdown();
+
+        saveWatchList();
+    }
 
     void addSymbol(final String s) {
 
@@ -278,17 +486,32 @@ public class WatchFragment extends Fragment {
 		}
 	}
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        saveWatchList();
+    void loadWatchList() {
+
+        try {
+            FileInputStream fi = getActivity().openFileInput("data.ser");
+
+            ObjectInputStream oi = new ObjectInputStream(fi);
+            watchList = (List<Map<String, String>>) oi.readObject();
+
+        } catch (Exception e) {
+            watchList =  new ArrayList<>();
+        }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        // Don't forget to shutdown textToSpeech!
-        stopTTS();
-    }
+    void saveWatchList() {
 
+        try {
+
+            FileOutputStream fout = getActivity().openFileOutput("data.ser", Activity.MODE_PRIVATE);
+
+            ObjectOutputStream os = new ObjectOutputStream(fout);
+            os.writeObject(watchList);
+
+            fout.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 }

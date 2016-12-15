@@ -33,26 +33,16 @@ import com.th.eoss.util.Formatter;
  */
 public class XDFragment extends Fragment implements SETOperatorListener {
 
-	List<Map<String, String>> stockList;
+	List<Map<String, String>> xdList = new ArrayList<>();
 
-	Map<String, Calendar> xdMap;
+	Map<String, Calendar> xdMap = new HashMap<>();
 
 	SimpleAdapter adapter;
 
 	ListView stockListView;
 
-	@Override
-	public void onAttach(Context context) {
-
-		super.onAttach(context);
-
-		if (stockList==null) {
-			stockList = new ArrayList<Map<String, String>>();
-		}
-
-        if (xdMap==null) {
-            xdMap = new HashMap<>();
-        }
+	MainActivity mainActivity() {
+		return (MainActivity) getActivity();
 	}
 
 	@Override
@@ -63,19 +53,17 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 		stockListView = (ListView) rootView.findViewById(R.id.listView);
 
-		adapter = new StockAdapter(getActivity(), stockList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
+		adapter = new StockAdapter(getActivity(), xdList, R.layout.xd_row, new String[] { "symbol", "date" }, new int[] { R.id.name, R.id.date});
 
 		stockListView.setAdapter(adapter);
 
 		stockListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-				Map<String, String> set = stockList.get(i);
-				((MainActivity)getActivity()).historical(set);
-
-			}
-		});
+                mainActivity().historical(xdList.get(i).get("symbol"));
+            }
+        });
 
 		return rootView;
 	}
@@ -84,7 +72,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 	public void onResume() {
 		super.onResume();
 
-		if (stockList.isEmpty()) {
+		if (xdList.isEmpty()) {
 			
 			load();
 			
@@ -96,7 +84,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 	public void onPause() {
 		super.onPause();
 
-        stockList.clear();
+        xdList.clear();
 		adapter.notifyDataSetChanged();
 	}
 
@@ -113,7 +101,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 						String line;
 						Map<String, String> map;
-						stockList.clear();
+						xdList.clear();
 						xdMap.clear();
 
 						while (true) {
@@ -133,7 +121,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 								date.setTime(Formatter.xdDateFormat.parse(map.get("date")));
 								xdMap.put(map.get("symbol"), date);
 
-								stockList.add(map);
+								xdList.add(map);
 								
 							}
 														
@@ -215,7 +203,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 
 	@Override
 	public void onWatch(String symbol) {
-		((MainActivity)getActivity()).watch(symbol);
+        mainActivity().watch(symbol);
 	}
 
 	@Override
