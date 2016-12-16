@@ -34,17 +34,17 @@ public class SpeechBundle {
         en.put("down", "down");
         th.put("down", "ลง");
 
-        en.put("price", "Last");
+        en.put("price", "Price");
         th.put("price", "ราคา");
 
         en.put("bath", "Bath");
         th.put("bath", "บาท");
 
-        en.put("greeting", "Hello, Welcome to Set Operator");
-        th.put("greeting", "Set Operator ยินดีรับใช้ค่ะ");
+        en.put("greeting", "Hello, Welcome to Seto");
+        th.put("greeting", "เซโต้ยินดีรับใช้ค่ะ");
 
         en.put("sleeping", "Market is currently closed");
-        th.put("sleeping", "ตลาดยังไม่เปิดทำการ");
+        th.put("sleeping", "ตลาดปิดทำการ");
 
         en.put("wake", "Market is open");
         th.put("wake", "ตลาดเปิดแล้วค่ะ");

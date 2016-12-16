@@ -2,10 +2,10 @@
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:orientation="vertical" android:layout_height="fill_parent"
-	android:layout_width="fill_parent" android:id="@+id/linearLayout1">
+	android:layout_width="fill_parent">
 
 	<LinearLayout android:layout_height="wrap_content" android:gravity="center"
-		android:layout_width="fill_parent" android:id="@+id/linearLayout1">
+		android:layout_width="fill_parent">
 		<Spinner android:id="@+id/spinnerOperators"
 			android:layout_width="wrap_content" android:layout_height="wrap_content" />
 		<EditText android:layout_height="wrap_content"
@@ -14,7 +14,7 @@
 	</LinearLayout>
 
 	<LinearLayout android:layout_height="wrap_content" android:gravity="center"
-		android:layout_width="fill_parent" android:id="@+id/linearLayout1">
+		android:layout_width="fill_parent">
 		<Button android:text="Apply Filter" android:id="@+id/buttonApply"
 			android:layout_width="wrap_content" android:layout_height="wrap_content"
 			android:onClick="applyFilterByValue" />

@@ -39,6 +39,7 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.th.eoss.util.Formatter;
+import com.th.eoss.util.SET;
 import com.th.eoss.util.SETDividend;
 import com.th.eoss.util.SETQuote;
 
@@ -337,7 +338,12 @@ public class WatchFragment extends Fragment implements TextToSpeech.OnInitListen
 
 		if (s==null || s.trim().isEmpty()) return;
 
-        final String symbol = s.trim();
+		final String symbol = s.trim();
+
+		if (SET.instance().getStock(s)==null) {
+			mainActivity().toast("Symbol Not Found!");
+			return;
+		}
 
 		new Thread() {
 

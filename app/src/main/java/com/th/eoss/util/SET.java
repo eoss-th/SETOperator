@@ -129,42 +129,44 @@ public class SET {
         Set<String> filterSet = filterMap.keySet();
         Filter filter;
 
-        for (Map<String, String> map: stockList) {
+        synchronized (filteredList) {
+            for (Map<String, String> map: stockList) {
 
-            match = true;
+                match = true;
 
-            for (String name: filterSet) {
+                for (String name: filterSet) {
 
-                filter = filterMap.get(name);
-                try {
+                    filter = filterMap.get(name);
+                    try {
 
-                    if (filter.opt.equals("=")) {
+                        if (filter.opt.equals("=")) {
 
-                        if (name.equals("Type") && filter.value.equals("Industrials")) {
-                            match &= map.get(name).startsWith("Industrial");
-                        } else {
-                            match &= map.get(name).equals(filter.value);
+                            if (name.equals("Type") && filter.value.equals("Industrials")) {
+                                match &= map.get(name).startsWith("Industrial");
+                            } else {
+                                match &= map.get(name).equals(filter.value);
+                            }
+
+                        } if (filter.opt.equals("<")) {
+
+                            match &= Double.parseDouble(map.get(name)) <= Double.parseDouble(filter.value);
+
+                        } else if (filter.opt.equals(">")) {
+
+                            match &= Double.parseDouble(map.get(name)) >= Double.parseDouble(filter.value);
                         }
 
-                    } if (filter.opt.equals("<")) {
-
-                        match &= Double.parseDouble(map.get(name)) <= Double.parseDouble(filter.value);
-
-                    } else if (filter.opt.equals(">")) {
-
-                        match &= Double.parseDouble(map.get(name)) >= Double.parseDouble(filter.value);
+                    } catch (Exception e) {
+                        match &= false;
                     }
 
-                } catch (Exception e) {
-                    match &= false;
+                }
+
+                if (match) {
+                    filteredList.add(map);
                 }
 
             }
-
-            if (match) {
-                filteredList.add(map);
-            }
-
         }
 
         return filteredList;

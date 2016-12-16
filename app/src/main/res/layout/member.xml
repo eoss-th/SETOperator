@@ -85,7 +85,6 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="90   Bath: 1 Month"
-                android:id="@+id/textView"
                 android:background="#ffffff"/>
 
         <TextView
@@ -93,7 +92,6 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="300 Bath: 6 Months"
-                android:id="@+id/textView"
                 android:background="#ffffff"/>
 
         <TextView
@@ -101,7 +99,6 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="500 Bath: 1 Year"
-                android:id="@+id/textView"
                 android:background="#ffffff"/>
     </LinearLayout>
     
