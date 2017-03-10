@@ -88,31 +88,41 @@ public class HistoricalFragment extends Fragment {
 	void load(final String symbol) {
 
         Map<String, String> stock = SET.instance().getStock(symbol);
-        this.selectedName = stock.get("name");
-        this.selectedWebsite = stock.get("website");
-        this.selectedPolicy = stock.get("policy");
 
-        combinedChart.setNoDataText("Loading...");
+		if (stock!=null) {
+			this.selectedName = stock.get("name");
+			this.selectedWebsite = stock.get("website");
+			this.selectedPolicy = stock.get("policy");
 
-		new Thread() {
+			combinedChart.setNoDataText("Loading...");
 
-			public void run() {
+			new Thread() {
 
-                selectedHistorical = new SETHistorical(symbol);
+				public void run() {
 
-                SingleHandler.handler.post(new Runnable() {
+					selectedHistorical = new SETHistorical(symbol);
 
-					@Override
-					public void run() {
-						reloadChart();
-					}
+					SingleHandler.handler.post(new Runnable() {
 
-				});
+						@Override
+						public void run() {
+							reloadChart();
+						}
 
-			}
+					});
 
-		}.start();
+				}
 
+			}.start();
+
+		} else {
+			mainActivity().toast("No Data!");
+		}
+
+	}
+
+	MainActivity mainActivity() {
+		return (MainActivity) getActivity();
 	}
 
 	private void reloadChart() {

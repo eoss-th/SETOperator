@@ -22,5 +22,6 @@ public class ExampleInstrumentedTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         assertEquals("com.th.eoss.setoperator", appContext.getPackageName());
+
     }
 }

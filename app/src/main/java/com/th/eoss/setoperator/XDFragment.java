@@ -24,6 +24,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.th.eoss.util.Formatter;
+import com.th.eoss.util.SET;
 
 /**
  * 
@@ -104,6 +105,7 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 						xdList.clear();
 						xdMap.clear();
 
+						String symbol, xd;
 						while (true) {
 							line = br.readLine();
 							if (line==null) break;
@@ -113,16 +115,22 @@ public class XDFragment extends Fragment implements SETOperatorListener {
 								line = line.replace("<title>", "");
 								line = line.replace("</title>", "");
 
-								map = new HashMap<String, String>();
-								map.put("symbol", line.substring(0, line.indexOf(" -")));
-								map.put("date", line.substring(line.indexOf(": ") + 2));
+								symbol = line.substring(0, line.indexOf(" -"));
 
-								Calendar date = Calendar.getInstance(Locale.US);
-								date.setTime(Formatter.xdDateFormat.parse(map.get("date")));
-								xdMap.put(map.get("symbol"), date);
+								if (SET.instance().getStock(symbol)!=null) {
 
-								xdList.add(map);
-								
+									xd = line.substring(line.indexOf(": ") + 2);
+									map = new HashMap<String, String>();
+									map.put("symbol", symbol);
+									map.put("date", xd);
+
+									Calendar date = Calendar.getInstance(Locale.US);
+									date.setTime(Formatter.xdDateFormat.parse(map.get("date")));
+									xdMap.put(map.get("symbol"), date);
+
+									xdList.add(map);
+								}
+
 							}
 														
 						}

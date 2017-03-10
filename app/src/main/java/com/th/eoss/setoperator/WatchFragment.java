@@ -17,6 +17,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
@@ -74,6 +75,11 @@ public class WatchFragment extends Fragment implements TextToSpeech.OnInitListen
         this.textToSpeech = new TextToSpeech(context, this, "com.google.android.textToSpeech");
 
         loadWatchList();
+
+		Intent intent = getActivity().getIntent();
+		String symbol = intent.getStringExtra("symbol");
+
+		addSymbolFromIntent(symbol);
 	}
 
 	@Override
@@ -130,7 +136,6 @@ public class WatchFragment extends Fragment implements TextToSpeech.OnInitListen
 		});
 
 		stockListView.setKeepScreenOn(true);
-
 
 		return rootView;
 	}
@@ -383,6 +388,61 @@ public class WatchFragment extends Fragment implements TextToSpeech.OnInitListen
                             }
                         }
                     });
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			}
+
+		}.start();
+
+	}
+
+	void addSymbolFromIntent(final String s) {
+
+		if (s==null || s.trim().isEmpty()) return;
+
+		final String symbol = s.trim();
+
+		new Thread() {
+
+			public void run() {
+				try {
+
+					for (Map<String, String> map: watchList) {
+						if (map.get("symbol").equals(symbol)) {
+							return;
+						}
+					}
+
+					final SETQuote q = new SETQuote(symbol);
+
+					final SETDividend d = new SETDividend(symbol);
+
+					SingleHandler.handler.post(new Runnable() {
+
+						@Override
+						public void run() {
+
+							synchronized (watchList) {
+								try {
+									Map<String, String> map = new HashMap<String, String>();
+									map.put("symbol", "" + symbol);
+									map.put("price", "" + q.last);
+									map.put("change", "" + q.chgPercent);
+
+									map.put("dvd", d.value);
+									map.put("xd", d.xd);
+
+									watchList.add(map);
+									adapter.notifyDataSetChanged();
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					});
 
 				} catch (Exception e) {
 					e.printStackTrace();
